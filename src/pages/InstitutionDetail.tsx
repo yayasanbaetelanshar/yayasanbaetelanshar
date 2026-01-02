@@ -12,10 +12,10 @@ import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
-import DtaLogo from "@/assets/Logo yayasan.png";
+import DtaLogo from "@/assets/logo DTA.png";
 import SmpLogo from "@/assets/logo SMP.png";
 import SmaLogo from "@/assets/logo SMA.png";
-import PesantrenLogo from "@/assets/Logo yayasan.png";
+import PesantrenLogo from "@/assets/logo pondok.png";
 
 const institutionsData = {
   dta: {

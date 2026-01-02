@@ -1,10 +1,10 @@
 import { ArrowRight, GraduationCap, BookOpen, Building, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import DtaLogo from "@/assets/Logo yayasan.png";
+import DtaLogo from "@/assets/logo DTA.png";
 import SmpLogo from "@/assets/logo SMP.png";
 import SmaLogo from "@/assets/logo SMA.png";
-import PesantrenLogo from "@/assets/Logo yayasan.png";
+import PesantrenLogo from "@/assets/logo pondok.png";
 
 
 const institutions = [
