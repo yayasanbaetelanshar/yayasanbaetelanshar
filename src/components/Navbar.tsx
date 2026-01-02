@@ -2,6 +2,7 @@ import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import Logo from "@/assets/Logo yayasan.png";
 
 const navItems = [
   { label: "Beranda", href: "/#beranda" },
@@ -19,14 +20,22 @@ const Navbar = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <a href="#beranda" className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-serif text-lg font-bold">ب</span>
-            </div>
-            <div className="hidden sm:block">
-              <span className="font-serif text-lg font-bold text-foreground">Baet El Anshar</span>
-            </div>
-          </a>
+          <Link to="/" className="flex items-center gap-3">
+  <img
+    src={Logo}
+    alt="Logo Yayasan Baet El Anshar"
+    className="h-10 w-10 object-contain"
+  />
+  <div className="hidden sm:block leading-tight">
+    <span className="font-serif text-lg font-bold text-foreground block">
+      Baet El Anshar
+    </span>
+    <span className="text-xs text-muted-foreground">
+      Yayasan Pendidikan Islam
+    </span>
+  </div>
+</Link>
+
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">

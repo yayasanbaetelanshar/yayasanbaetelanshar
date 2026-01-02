@@ -39,7 +39,7 @@ const HeroSection = () => {
               { number: "4", label: "Lembaga Pendidikan" },
               { number: "500+", label: "Santri & Siswa" },
               { number: "50+", label: "Tenaga Pengajar" },
-              { number: "15+", label: "Tahun Berdiri" },
+              { number: "9", label: "Tahun Berdiri" },
             ].map((stat, index) => (
               <div
                 key={index}
@@ -56,15 +56,30 @@ const HeroSection = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="gold" size="xl">
-              Jelajahi Lembaga Kami
-            </Button>
-            <Button variant="outline-light" size="xl">
-              Hubungi Kami
-            </Button>
+<Button
+  variant="gold"
+  size="xl"
+  onClick={() => {
+    const el = document.getElementById("lembaga");
+    el && el.scrollIntoView({ behavior: "smooth" });
+  }}
+>
+  Jelajahi Lembaga Kami
+</Button>
+
+<Button
+  variant="outline-light"
+  size="xl"
+  onClick={() => {
+    const el = document.getElementById("kontak");
+    el && el.scrollIntoView({ behavior: "smooth" });
+  }}
+>
+  Hubungi Kami
+</Button>
+</div>
           </div>
         </div>
-      </div>
 
       {/* Scroll Indicator */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">

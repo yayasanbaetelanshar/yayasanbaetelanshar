@@ -1,6 +1,11 @@
 import { ArrowRight, GraduationCap, BookOpen, Building, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import DtaLogo from "@/assets/Logo yayasan.png";
+import SmpLogo from "@/assets/logo SMP.png";
+import SmaLogo from "@/assets/logo SMA.png";
+import PesantrenLogo from "@/assets/Logo yayasan.png";
+
 
 const institutions = [
   {
@@ -9,7 +14,7 @@ const institutions = [
     name: "DTA Arrasyd",
     subtitle: "Diniyah Takmiliyah Awaliyah",
     description: "Pendidikan agama Islam dasar untuk anak-anak dengan kurikulum yang menyenangkan dan mudah dipahami.",
-    icon: BookOpen,
+    logo: DtaLogo,
     color: "from-emerald-500 to-emerald-600",
     features: ["Baca Tulis Al-Qur'an", "Akidah & Akhlak", "Fiqih Dasar", "Bahasa Arab"],
   },
@@ -19,7 +24,7 @@ const institutions = [
     name: "SMP Baet El Anshar",
     subtitle: "Sekolah Menengah Pertama",
     description: "Jenjang pendidikan menengah pertama dengan kurikulum nasional dan penguatan pendidikan Islam.",
-    icon: Building,
+    logo: SmpLogo,
     color: "from-blue-500 to-blue-600",
     features: ["Kurikulum Merdeka", "Tahfidz Program", "Ekstrakurikuler", "Bimbingan Belajar"],
   },
@@ -29,8 +34,8 @@ const institutions = [
     name: "SMA Baet El Anshar",
     subtitle: "Sekolah Menengah Atas",
     description: "Pendidikan menengah atas yang mempersiapkan siswa untuk melanjutkan ke perguruan tinggi.",
-    icon: GraduationCap,
-    color: "from-amber-500 to-amber-600",
+    logo: SmaLogo,
+    color: "from-gray-500 to-gray-600",
     features: ["Program IPA & IPS", "Persiapan UTBK", "Tahfidz Lanjutan", "Leadership Program"],
   },
   {
@@ -39,7 +44,7 @@ const institutions = [
     name: "Pondok Pesantren Tahfidz Quran",
     subtitle: "Baet El Anshar",
     description: "Program intensif menghafal Al-Qur'an dengan bimbingan hafidz berpengalaman dalam lingkungan Islami.",
-    icon: Moon,
+    logo: PesantrenLogo,
     color: "from-primary to-emerald-700",
     features: ["30 Juz Program", "Metode Talaqqi", "Asrama 24 Jam", "Pembinaan Akhlak"],
   },
@@ -70,9 +75,13 @@ const InstitutionsSection = () => {
               {/* Header with gradient */}
               <div className={`bg-gradient-to-r ${institution.color} p-6 text-primary-foreground`}>
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-xl bg-primary-foreground/20 flex items-center justify-center">
-                    <institution.icon className="w-7 h-7" />
-                  </div>
+                 <div className="w-14 h-14 rounded-xl bg-primary-foreground/20 flex items-center justify-center">
+  <img
+    src={institution.logo}
+    alt={`Logo ${institution.name}`}
+    className="w-10 h-10 object-contain"
+  />
+</div>
                   <div>
                     <h3 className="font-serif text-xl md:text-2xl font-bold">{institution.name}</h3>
                     <p className="text-primary-foreground/80 text-sm">{institution.subtitle}</p>

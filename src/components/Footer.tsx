@@ -79,15 +79,15 @@ const Footer = () => {
             <ul className="space-y-3">
               <li className="flex items-start gap-3 text-primary-foreground/80">
                 <MapPin size={18} className="shrink-0 mt-0.5" />
-                <span className="text-sm">Jl. Pesantren No. 123, Jawa Barat</span>
+                <span className="text-sm">Kp. Pasir Awi Rt 11/003 Desa Palasari girang Kecamatan Kalapanunggal Kabupaten Sukabumi Provinsi Jawa Barat</span>
               </li>
               <li className="flex items-center gap-3 text-primary-foreground/80">
                 <Phone size={18} className="shrink-0" />
-                <span className="text-sm">+62 812 3456 7890</span>
+                <span className="text-sm">+62 857-2300-6453</span>
               </li>
               <li className="flex items-center gap-3 text-primary-foreground/80">
                 <Mail size={18} className="shrink-0" />
-                <span className="text-sm">info@baetelanshar.or.id</span>
+                <span className="text-sm">yayasanbaetelanshar2@gmail.com</span>
               </li>
             </ul>
           </div>

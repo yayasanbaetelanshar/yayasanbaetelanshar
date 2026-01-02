@@ -6,22 +6,22 @@ const contactInfo = [
   {
     icon: MapPin,
     title: "Alamat",
-    content: "Jl. Pesantren No. 123, Desa Barokah, Kecamatan Rahmat, Kabupaten Berkah, Jawa Barat 12345",
+    content: "Kp. Pasir Awi Rt 11/003 Desa Palasari girang Kecamatan Kalapanunggal Kabupaten Sukabumi Provinsi Jawa Barat",
   },
   {
     icon: Phone,
     title: "Telepon",
-    content: "+62 812 3456 7890",
+    content: "+62 857-2300-6453",
   },
   {
     icon: Mail,
     title: "Email",
-    content: "info@baetelanshar.or.id",
+    content: "yayasanbaetelanshar2@gmail.com",
   },
   {
     icon: Clock,
     title: "Jam Operasional",
-    content: "Senin - Sabtu: 07:00 - 17:00 WIB",
+    content: "Senin - Sabtu: 07:00 - 15:00 WIB",
   },
 ];
 
@@ -74,7 +74,7 @@ const ContactSection = () => {
             {/* Map placeholder */}
             <div className="w-full h-64 rounded-xl bg-muted overflow-hidden border border-border">
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3965.8662957627824!2d106.8272!3d-6.2866!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNsKwMTcnMTEuOCJTIDEwNsKwNDknMzguMCJF!5e0!3m2!1sen!2sid!4v1234567890"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3961.6644189082276!2d106.65402807472918!3d-6.810610993186967!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e682d80c627d91d%3A0x5437a59349d527d6!2sPondok%20Pesantren%20Tahfidz%20Qur&#39;an%20Yayasan%20Baet%20El%20Anshar!5e0!3m2!1sid!2sid!4v1767357724355!5m2!1sid!2sid"
                 width="100%"
                 height="100%"
                 style={{ border: 0 }}
