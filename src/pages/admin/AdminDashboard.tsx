@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import LogoBaetElAnshar from "@/assets/Logo yayasan.png"
 
 interface DashboardStats {
   totalRegistrations: number;
@@ -148,17 +149,20 @@ const AdminDashboard = () => {
       </Helmet>
 
       <div className="min-h-screen bg-background">
-        {/* Header */}
-        <header className="bg-card border-b border-border sticky top-0 z-50">
+       {/* Header dengan Logo */}
+        <header className="bg-card border-b border-border sticky top-0 z-50 shadow-sm">
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-between h-16">
+              {/* Logo & Nama */}
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-                  <span className="text-primary-foreground font-serif text-lg font-bold">ب</span>
-                </div>
+                <img
+                  src={LogoBaetElAnshar}
+                  alt="Logo Yayasan Baet El Anshar"
+                  className="h-10 w-auto object-contain"
+                />
                 <div>
                   <span className="font-serif text-lg font-bold text-foreground">Admin Panel</span>
-                  <p className="text-xs text-muted-foreground">Baet El Anshar</p>
+                  <p className="text-xs text-muted-foreground">Yayasan Baet El Anshar</p>
                 </div>
               </div>
               <Button variant="ghost" size="sm" onClick={handleLogout}>
