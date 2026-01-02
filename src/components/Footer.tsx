@@ -23,21 +23,21 @@ const Footer = () => {
             </p>
             <div className="flex gap-4">
               <a
-                href="#"
+                href="https://web.facebook.com/yayasanbaetelanshar/"
                 className="w-10 h-10 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-secondary hover:text-secondary-foreground transition-all duration-300"
                 aria-label="Facebook"
               >
                 <Facebook size={20} />
               </a>
               <a
-                href="#"
+                href="https://www.instagram.com/baetelanshar_media?igsh=MTZvMW5ibm43ZTAxOQ=="
                 className="w-10 h-10 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-secondary hover:text-secondary-foreground transition-all duration-300"
                 aria-label="Instagram"
               >
                 <Instagram size={20} />
               </a>
               <a
-                href="#"
+                href="https://www.youtube.com/@BaetElAnshar"
                 className="w-10 h-10 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-secondary hover:text-secondary-foreground transition-all duration-300"
                 aria-label="Youtube"
               >
@@ -51,22 +51,22 @@ const Footer = () => {
             <h4 className="font-serif text-lg font-bold mb-4">Lembaga Kami</h4>
             <ul className="space-y-3">
               <li>
-                <a href="#" className="text-primary-foreground/80 hover:text-secondary transition-colors">
+                <a href="/lembaga/dta" className="text-primary-foreground/80 hover:text-secondary transition-colors">
                   DTA Arrasyd
                 </a>
               </li>
               <li>
-                <a href="#" className="text-primary-foreground/80 hover:text-secondary transition-colors">
+                <a href="/lembaga/smp" className="text-primary-foreground/80 hover:text-secondary transition-colors">
                   SMP Baet El Anshar
                 </a>
               </li>
               <li>
-                <a href="#" className="text-primary-foreground/80 hover:text-secondary transition-colors">
+                <a href="/lembaga/sma" className="text-primary-foreground/80 hover:text-secondary transition-colors">
                   SMA Baet El Anshar
                 </a>
               </li>
               <li>
-                <a href="#" className="text-primary-foreground/80 hover:text-secondary transition-colors">
+                <a href="/lembaga/pesantren" className="text-primary-foreground/80 hover:text-secondary transition-colors">
                   Pondok Pesantren Tahfidz
                 </a>
               </li>

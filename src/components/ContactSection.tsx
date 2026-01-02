@@ -6,7 +6,7 @@ const contactInfo = [
   {
     icon: MapPin,
     title: "Alamat",
-    content: "Kp. Pasir Awi Rt 11/003 Desa Palasari girang Kecamatan Kalapanunggal Kabupaten Sukabumi Provinsi Jawa Barat",
+    content: "Kp. Pasir Awi Rt 11/003 Desa Palasari Girang Kecamatan Kalapanunggal Kabupaten Sukabumi Provinsi Jawa Barat",
   },
   {
     icon: Phone,
@@ -35,8 +35,35 @@ const ContactSection = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
-    console.log(formData);
+
+    if (!formData.name || !formData.email || !formData.message) {
+      alert("Nama, email, dan pesan wajib diisi!");
+      return;
+    }
+
+    const text = `
+Assalamualaikum, Perkenalkan
+
+Nama: ${formData.name}
+Email: ${formData.email}
+No. Telepon: ${formData.phone || "-"}
+ingin Bertanya
+${formData.message}
+    `.trim();
+
+    const encodedText = encodeURIComponent(text);
+    const phoneNumber = "6285975213222"; // Nomor tujuan: 085975213222
+
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedText}`;
+
+    // Buka WhatsApp di tab baru
+    window.open(whatsappUrl, "_blank");
+
+    // Optional: beri notifikasi
+    alert("Pesan sedang dibuka di WhatsApp. Silakan lanjutkan chat di sana.");
+
+    // Optional: reset form setelah submit
+    // setFormData({ name: "", email: "", phone: "", message: "" });
   };
 
   return (
@@ -48,13 +75,12 @@ const ContactSection = () => {
             Kami Siap Membantu Anda
           </h2>
           <p className="text-muted-foreground text-lg leading-relaxed">
-            Silahkan hubungi kami untuk informasi lebih lanjut mengenai pendaftaran, 
-            program pendidikan, atau pertanyaan lainnya.
+            Silahkan hubungi kami untuk informasi lebih lanjut mengenai pendaftaran, program pendidikan, atau pertanyaan lainnya.
           </p>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-12">
-          {/* Contact Info */}
+          {/* Contact Info & Map */}
           <div className="space-y-6">
             {contactInfo.map((info, index) => (
               <div
@@ -71,7 +97,7 @@ const ContactSection = () => {
               </div>
             ))}
 
-            {/* Map placeholder */}
+            {/* Google Maps */}
             <div className="w-full h-64 rounded-xl bg-muted overflow-hidden border border-border">
               <iframe
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3961.6644189082276!2d106.65402807472918!3d-6.810610993186967!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e682d80c627d91d%3A0x5437a59349d527d6!2sPondok%20Pesantren%20Tahfidz%20Qur&#39;an%20Yayasan%20Baet%20El%20Anshar!5e0!3m2!1sid!2sid!4v1767357724355!5m2!1sid!2sid"
@@ -86,7 +112,7 @@ const ContactSection = () => {
             </div>
           </div>
 
-          {/* Contact Form */}
+          {/* Contact Form - Kirim ke WhatsApp */}
           <div className="bg-card rounded-2xl p-8 border border-border shadow-lg">
             <h3 className="font-serif text-2xl font-bold text-foreground mb-6">
               Kirim Pesan
@@ -105,6 +131,7 @@ const ContactSection = () => {
                   required
                 />
               </div>
+
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
@@ -119,6 +146,7 @@ const ContactSection = () => {
                     required
                   />
                 </div>
+
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
                     No. Telepon
@@ -132,6 +160,7 @@ const ContactSection = () => {
                   />
                 </div>
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
                   Pesan
@@ -145,8 +174,9 @@ const ContactSection = () => {
                   required
                 />
               </div>
+
               <Button type="submit" variant="gold" size="lg" className="w-full">
-                <Send className="w-4 h-4" />
+                <Send className="w-4 h-4 mr-2" />
                 Kirim Pesan
               </Button>
             </form>
