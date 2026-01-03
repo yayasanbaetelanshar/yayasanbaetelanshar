@@ -4,7 +4,7 @@ import { Helmet } from "react-helmet-async";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, Chrome } from "lucide-react"; // <-- Tambah Chrome untuk ikon Google
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +25,7 @@ const Auth = () => {
   const { toast } = useToast();
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false); // <-- State baru untuk loading Google
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -40,9 +41,9 @@ const Auth = () => {
     const checkRoleAndRedirect = async (userId: string) => {
       const { data: hasAdminRole } = await supabase.rpc("has_role", {
         _user_id: userId,
-        _role: "admin"
+        _role: "admin",
       });
-      
+
       if (hasAdminRole) {
         navigate("/admin");
       } else {
@@ -121,6 +122,34 @@ const Auth = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Fungsi Login/Daftar dengan Google
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin, // Kembali ke app setelah login
+          queryParams: {
+            prompt: "consent", // Memastikan user diminta pilih akun
+          },
+        },
+      });
+
+      if (error) throw error;
+
+      // Redirect akan ditangani oleh Supabase → kembali ke app → onAuthStateChange akan jalankan redirect berdasarkan role
+    } catch (error: any) {
+      toast({
+        title: "Gagal Login dengan Google",
+        description: error.message || "Terjadi kesalahan saat mencoba login dengan Google.",
+        variant: "destructive",
+      });
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -252,7 +281,7 @@ const Auth = () => {
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
                     {isLogin ? "Masuk..." : "Mendaftar..."}
                   </>
                 ) : isLogin ? (
@@ -262,6 +291,33 @@ const Auth = () => {
                 )}
               </Button>
             </form>
+
+            {/* Divider "atau" */}
+            <div className="relative my-8">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-background px-4 text-muted-foreground">atau</span>
+              </div>
+            </div>
+
+            {/* Tombol Login dengan Google */}
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              className="w-full"
+              onClick={handleGoogleSignIn}
+              disabled={googleLoading}
+            >
+              {googleLoading ? (
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              ) : (
+                <Chrome className="mr-2 h-5 w-5" />
+              )}
+              {isLogin ? "Masuk" : "Daftar"} dengan Google
+            </Button>
 
             <div className="mt-6 text-center">
               <button
