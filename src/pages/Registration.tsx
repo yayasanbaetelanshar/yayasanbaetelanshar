@@ -1,450 +1,707 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Upload, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { User, MapPin, Phone, Mail, GraduationCap, Calendar, School, ArrowLeft, ArrowRight, CheckCircle, Eye, EyeOff, Copy, Upload, FileText, Image, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { supabase } from "@/integrations/supabase/client";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import { toast } from "sonner";
+import Layout from "@/components/layout/Layout";
 
 const registrationSchema = z.object({
-  parent_name: z.string().min(3, "Nama harus minimal 3 karakter"),
-  parent_phone: z.string().min(10, "Nomor telepon tidak valid"),
-  parent_email: z.string().email("Email tidak valid"),
-  parent_address: z.string().min(10, "Alamat harus lengkap"),
-  parent_occupation: z.string().optional(),
-  student_name: z.string().min(3, "Nama harus minimal 3 karakter"),
-  student_birth_date: z.string().min(1, "Tanggal lahir wajib diisi"),
-  student_birth_place: z.string().min(2, "Tempat lahir wajib diisi"),
-  student_gender: z.enum(["male", "female"], { required_error: "Pilih jenis kelamin" }),
-  institution: z.enum(["dta", "smp", "sma", "pesantren"], { required_error: "Pilih lembaga" }),
-  previous_school: z.string().optional(),
+  // Parent info
+  parentName: z.string().min(3, "Nama minimal 3 karakter"),
+  parentEmail: z.string().email("Email tidak valid"),
+  parentPhone: z.string().min(10, "Nomor telepon tidak valid"),
+  parentAddress: z.string().min(10, "Alamat minimal 10 karakter"),
+  // Student info
+  studentName: z.string().min(3, "Nama minimal 3 karakter"),
+  birthPlace: z.string().min(2, "Tempat lahir wajib diisi"),
+  birthDate: z.string().min(1, "Tanggal lahir wajib diisi"),
+  gender: z.string().min(1, "Jenis kelamin wajib dipilih"),
+  previousSchool: z.string().optional(),
+  // Institution
+  institution: z.string().min(1, "Pilih lembaga pendidikan"),
 });
 
-type RegistrationFormData = z.infer<typeof registrationSchema>;
+type RegistrationForm = z.infer<typeof registrationSchema>;
 
-const Registration = () => {
+interface DocumentFile {
+  file: File;
+  preview: string;
+  uploading: boolean;
+  url?: string;
+}
+
+interface Documents {
+  kk: DocumentFile | null;
+  ktp: DocumentFile | null;
+  ijazah: DocumentFile | null;
+  photo: DocumentFile | null;
+  buktiTransfer: DocumentFile | null;
+}
+
+const institutions = [
+  { id: "dta", name: "DTA Arrasyd", level: "Tingkat Dasar" },
+  { id: "smp", name: "SMP Baet El Anshar", level: "Tingkat Menengah Pertama" },
+  { id: "sma", name: "SMA Baet El Anshar", level: "Tingkat Menengah Atas" },
+  { id: "pesantren", name: "Pesantren Tahfidz Quran", level: "Program Tahfidz" },
+];
+
+interface RegistrationCredentials {
+  email: string;
+  password: string;
+}
+
+const documentTypes = [
+  { key: "kk", label: "Kartu Keluarga (KK)", icon: FileText, required: true },
+  { key: "ktp", label: "KTP Orang Tua", icon: FileText, required: true },
+  { key: "ijazah", label: "Ijazah / SKL", icon: FileText, required: true },
+  { key: "photo", label: "Pas Photo 3x4", icon: Image, required: true },
+  { key: "buktiTransfer", label: "Bukti Transfer Pendaftaran", icon: FileText, required: true },
+] as const;
+
+export default function Registration() {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [documents, setDocuments] = useState<{
-    birth_certificate?: File;
-    family_card?: File;
-    photo?: File;
-    report_card?: File;
-    payment_proof?: File;
-  }>({});
-  const [paymentProofError, setPaymentProofError] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<Record<string, boolean>>({});
+  const [step, setStep] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [isNewUser, setIsNewUser] = useState(true);
+  const [credentials, setCredentials] = useState<RegistrationCredentials | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [documents, setDocuments] = useState<Documents>({
+    kk: null,
+    ktp: null,
+    ijazah: null,
+    photo: null,
+    buktiTransfer: null,
+  });
+  const [uploadingDocs, setUploadingDocs] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    formState: { errors },
-  } = useForm<RegistrationFormData>({
+  const form = useForm<RegistrationForm>({
     resolver: zodResolver(registrationSchema),
+    defaultValues: {
+      parentName: "",
+      parentEmail: "",
+      parentPhone: "",
+      parentAddress: "",
+      studentName: "",
+      birthPlace: "",
+      birthDate: "",
+      gender: "",
+      previousSchool: "",
+      institution: "",
+    },
   });
 
-  const handleFileChange = (field: keyof typeof documents, file: File | undefined) => {
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast({
-          title: "File terlalu besar",
-          description: "Ukuran file maksimal 5MB",
-          variant: "destructive",
-        });
-        return;
-      }
-      setDocuments((prev) => ({ ...prev, [field]: file }));
+  const handleFileSelect = (key: keyof Documents, file: File) => {
+    const preview = URL.createObjectURL(file);
+    setDocuments(prev => ({
+      ...prev,
+      [key]: { file, preview, uploading: false }
+    }));
+  };
+
+  const removeFile = (key: keyof Documents) => {
+    if (documents[key]?.preview) {
+      URL.revokeObjectURL(documents[key]!.preview);
     }
+    setDocuments(prev => ({
+      ...prev,
+      [key]: null
+    }));
   };
 
-  const uploadDocument = async (file: File, path: string) => {
-    const fileExt = file.name.split(".").pop();
-    const fileName = `${path}-${Date.now()}.${fileExt}`;
-    const { data, error } = await supabase.storage
-      .from("registration-documents")
-      .upload(fileName, file);
+  const uploadDocuments = async (studentEmail: string): Promise<Record<string, string>> => {
+    const uploadedUrls: Record<string, string> = {};
+    const timestamp = Date.now();
+    const sanitizedEmail = studentEmail.replace(/[^a-zA-Z0-9]/g, '_');
 
-    if (error) throw error;
-    return data.path;
+    for (const [key, doc] of Object.entries(documents)) {
+      if (doc?.file) {
+        const fileExt = doc.file.name.split('.').pop();
+        const filePath = `${sanitizedEmail}/${key}_${timestamp}.${fileExt}`;
+        
+        const { error } = await supabase.storage
+          .from('registration-documents')
+          .upload(filePath, doc.file);
+
+        if (error) {
+          console.error(`Error uploading ${key}:`, error);
+          throw new Error(`Gagal mengupload ${key}`);
+        }
+
+        uploadedUrls[key] = filePath;
+      }
+    }
+
+    return uploadedUrls;
   };
 
-  const onSubmit = async (data: RegistrationFormData) => {
-    // Validate payment proof is required
-    if (!documents.payment_proof) {
-      setPaymentProofError(true);
-      toast({
-        title: "Bukti Pembayaran Wajib",
-        description: "Mohon upload bukti pembayaran pendaftaran",
-        variant: "destructive",
-      });
+  const handleSubmit = async (data: RegistrationForm) => {
+    // Validate all documents are uploaded
+    const missingDocs = documentTypes.filter(dt => dt.required && !documents[dt.key]);
+    if (missingDocs.length > 0) {
+      toast.error(`Dokumen belum lengkap: ${missingDocs.map(d => d.label).join(', ')}`);
       return;
     }
-    setPaymentProofError(false);
-    setIsSubmitting(true);
+
+    setIsLoading(true);
+    setUploadingDocs(true);
 
     try {
-      // Upload documents
-      const documentUrls: Record<string, string> = {};
+      // Upload documents first
+      const documentUrls = await uploadDocuments(data.parentEmail);
+      setUploadingDocs(false);
 
-      for (const [key, file] of Object.entries(documents)) {
-        if (file) {
-          setUploadProgress((prev) => ({ ...prev, [key]: true }));
-          const path = await uploadDocument(file, `${data.student_name.replace(/\s/g, "-")}-${key}`);
-          documentUrls[`${key}_url`] = path;
-          setUploadProgress((prev) => ({ ...prev, [key]: false }));
+      // Then register the student
+      const { data: response, error } = await supabase.functions.invoke('register-student', {
+        body: {
+          ...data,
+          documents: documentUrls
         }
-      }
-
-      // Submit registration
-      const insertData = {
-        parent_name: data.parent_name,
-        parent_phone: data.parent_phone,
-        parent_email: data.parent_email,
-        parent_address: data.parent_address,
-        parent_occupation: data.parent_occupation || null,
-        student_name: data.student_name,
-        student_birth_date: data.student_birth_date,
-        student_birth_place: data.student_birth_place,
-        student_gender: data.student_gender,
-        institution: data.institution,
-        previous_school: data.previous_school || null,
-        birth_certificate_url: documentUrls.birth_certificate_url || null,
-        family_card_url: documentUrls.family_card_url || null,
-        photo_url: documentUrls.photo_url || null,
-        report_card_url: documentUrls.report_card_url || null,
-        payment_proof_url: documentUrls.payment_proof_url || null,
-      };
-
-      const { data: registration, error } = await supabase
-        .from("registrations")
-        .insert(insertData as any)
-        .select()
-        .single();
+      });
 
       if (error) throw error;
+      
+      if (!response.success) {
+        throw new Error(response.message);
+      }
 
-      toast({
-        title: "Pendaftaran Berhasil!",
-        description: `Nomor pendaftaran Anda: ${registration.registration_number}`,
-      });
-
-      navigate(`/pendaftaran/status?reg=${registration.registration_number}`);
-    } catch (error: any) {
-      toast({
-        title: "Pendaftaran Gagal",
-        description: error.message || "Terjadi kesalahan. Silakan coba lagi.",
-        variant: "destructive",
-      });
+      setCredentials(response.credentials);
+      setIsNewUser(response.isNewUser);
+      setIsSuccess(true);
+      toast.success(response.message);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Terjadi kesalahan";
+      toast.error(errorMessage);
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
+      setUploadingDocs(false);
     }
   };
 
-  const institution = watch("institution");
+  const nextStep = async () => {
+    let fieldsToValidate: (keyof RegistrationForm)[] = [];
+    
+    if (step === 1) {
+      fieldsToValidate = ["parentName", "parentEmail", "parentPhone", "parentAddress"];
+    } else if (step === 2) {
+      fieldsToValidate = ["studentName", "birthPlace", "birthDate", "gender"];
+    } else if (step === 3) {
+      fieldsToValidate = ["institution"];
+    }
+
+    const isValid = await form.trigger(fieldsToValidate);
+    if (isValid) {
+      setStep(step + 1);
+    }
+  };
+
+  const allDocumentsUploaded = documentTypes.every(dt => !dt.required || documents[dt.key]);
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Disalin ke clipboard");
+  };
+
+  if (isSuccess) {
+    return (
+      <Layout>
+        <section className="min-h-[80vh] flex items-center justify-center py-16 px-4">
+          <div className="max-w-md w-full text-center">
+            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
+              <CheckCircle className="w-10 h-10 text-primary" />
+            </div>
+            <h1 className="font-serif text-3xl font-bold text-foreground mb-4">
+              Pendaftaran Berhasil!
+            </h1>
+            <p className="text-muted-foreground mb-8">
+              {isNewUser 
+                ? "Akun wali santri telah dibuat. Simpan data login berikut untuk mengakses dashboard."
+                : "Santri baru telah ditambahkan ke akun Anda. Silakan login dengan akun yang sudah ada untuk melihat status pendaftaran."
+              }
+            </p>
+            
+            {isNewUser && credentials ? (
+              <div className="bg-card rounded-xl border border-border p-6 mb-8 text-left">
+                <h3 className="font-semibold text-lg mb-4 text-center">Data Login Wali Santri</h3>
+                
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-muted-foreground">Email</Label>
+                    <div className="flex items-center gap-2">
+                      <Input value={credentials.email} readOnly className="bg-muted" />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => copyToClipboard(credentials.email)}
+                      >
+                        <Copy className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label className="text-muted-foreground">Password</Label>
+                    <div className="flex items-center gap-2">
+                      <div className="relative flex-1">
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          value={credentials.password}
+                          readOnly
+                          className="bg-muted pr-10"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => copyToClipboard(credentials.password)}
+                      >
+                        <Copy className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                
+                <p className="text-sm text-destructive mt-4 text-center">
+                  ⚠️ Simpan data ini dengan baik. Password tidak dapat dilihat kembali.
+                </p>
+              </div>
+            ) : (
+              <div className="bg-card rounded-xl border border-border p-6 mb-8">
+                <p className="text-muted-foreground">
+                  Santri baru telah terdaftar dan terhubung dengan akun wali yang sudah ada.
+                </p>
+              </div>
+            )}
+            
+            <div className="flex gap-4 justify-center">
+              <Button onClick={() => navigate("/login")}>
+                Login Sekarang
+              </Button>
+              <Button variant="outline" onClick={() => navigate("/")}>
+                Kembali ke Beranda
+              </Button>
+            </div>
+          </div>
+        </section>
+      </Layout>
+    );
+  }
 
   return (
-    <>
-      <Helmet>
-        <title>Pendaftaran Online - Yayasan Baet El Anshar</title>
-        <meta name="description" content="Daftar online untuk menjadi siswa di Yayasan Baet El Anshar" />
-      </Helmet>
-
-      <Navbar />
-
-      <main className="pt-24 pb-16 bg-background min-h-screen">
+    <Layout>
+      <section className="py-16 lg:py-24 islamic-pattern">
         <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto">
-            <div className="text-center mb-10">
-              <span className="text-secondary font-serif text-lg mb-2 block">Pendaftaran Siswa Baru</span>
+          <div className="max-w-2xl mx-auto">
+            {/* Header */}
+            <div className="text-center mb-12">
+              <span className="inline-block text-secondary font-semibold text-sm uppercase tracking-wider mb-4">
+                Pendaftaran Santri Baru
+              </span>
               <h1 className="font-serif text-3xl md:text-4xl font-bold text-foreground mb-4">
-                Formulir Pendaftaran Online
+                Formulir Pendaftaran
               </h1>
               <p className="text-muted-foreground">
-                Silakan isi formulir di bawah ini dengan lengkap dan benar.
+                Lengkapi data berikut untuk mendaftarkan putra-putri Anda. Akun login akan otomatis dibuat.
               </p>
             </div>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-              {/* Institution Selection */}
-              <div className="bg-card p-6 rounded-xl border border-border">
-                <h2 className="font-serif text-xl font-semibold text-foreground mb-4">
-                  Pilih Lembaga
-                </h2>
-                <Select onValueChange={(value) => setValue("institution", value as any)}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Pilih lembaga pendidikan" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="dta">DTA Arrasyd</SelectItem>
-                    <SelectItem value="smp">SMP Baet El Anshar</SelectItem>
-                    <SelectItem value="sma">SMA Baet El Anshar</SelectItem>
-                    <SelectItem value="pesantren">Pondok Pesantren Tahfidz Quran</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.institution && (
-                  <p className="text-destructive text-sm mt-1">{errors.institution.message}</p>
-                )}
-              </div>
-
-              {/* Parent Information */}
-              <div className="bg-card p-6 rounded-xl border border-border">
-                <h2 className="font-serif text-xl font-semibold text-foreground mb-4">
-                  Data Orang Tua / Wali
-                </h2>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="parent_name">Nama Lengkap *</Label>
-                    <Input
-                      id="parent_name"
-                      {...register("parent_name")}
-                      placeholder="Nama lengkap orang tua/wali"
-                    />
-                    {errors.parent_name && (
-                      <p className="text-destructive text-sm mt-1">{errors.parent_name.message}</p>
-                    )}
+            {/* Progress Steps */}
+            <div className="flex items-center justify-center gap-2 md:gap-4 mb-12">
+              {[1, 2, 3, 4].map((s) => (
+                <div key={s} className="flex items-center gap-2">
+                  <div
+                    className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center font-semibold text-sm md:text-base ${
+                      step >= s
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {s}
                   </div>
-                  <div>
-                    <Label htmlFor="parent_phone">No. Telepon *</Label>
-                    <Input
-                      id="parent_phone"
-                      {...register("parent_phone")}
-                      placeholder="08xx xxxx xxxx"
+                  {s < 4 && (
+                    <div
+                      className={`w-8 md:w-12 h-1 rounded ${
+                        step > s ? "bg-primary" : "bg-muted"
+                      }`}
                     />
-                    {errors.parent_phone && (
-                      <p className="text-destructive text-sm mt-1">{errors.parent_phone.message}</p>
-                    )}
-                  </div>
-                  <div>
-                    <Label htmlFor="parent_email">Email *</Label>
-                    <Input
-                      id="parent_email"
-                      type="email"
-                      {...register("parent_email")}
-                      placeholder="email@contoh.com"
-                    />
-                    {errors.parent_email && (
-                      <p className="text-destructive text-sm mt-1">{errors.parent_email.message}</p>
-                    )}
-                  </div>
-                  <div>
-                    <Label htmlFor="parent_occupation">Pekerjaan</Label>
-                    <Input
-                      id="parent_occupation"
-                      {...register("parent_occupation")}
-                      placeholder="Pekerjaan orang tua/wali"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <Label htmlFor="parent_address">Alamat Lengkap *</Label>
-                    <Textarea
-                      id="parent_address"
-                      {...register("parent_address")}
-                      placeholder="Alamat lengkap termasuk RT/RW, kelurahan, kecamatan"
-                      rows={3}
-                    />
-                    {errors.parent_address && (
-                      <p className="text-destructive text-sm mt-1">{errors.parent_address.message}</p>
-                    )}
-                  </div>
+                  )}
                 </div>
-              </div>
+              ))}
+            </div>
 
-              {/* Student Information */}
-              <div className="bg-card p-6 rounded-xl border border-border">
-                <h2 className="font-serif text-xl font-semibold text-foreground mb-4">
-                  Data Calon Siswa
-                </h2>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="md:col-span-2">
-                    <Label htmlFor="student_name">Nama Lengkap *</Label>
-                    <Input
-                      id="student_name"
-                      {...register("student_name")}
-                      placeholder="Nama lengkap sesuai akta kelahiran"
-                    />
-                    {errors.student_name && (
-                      <p className="text-destructive text-sm mt-1">{errors.student_name.message}</p>
-                    )}
-                  </div>
-                  <div>
-                    <Label htmlFor="student_birth_place">Tempat Lahir *</Label>
-                    <Input
-                      id="student_birth_place"
-                      {...register("student_birth_place")}
-                      placeholder="Kota/kabupaten kelahiran"
-                    />
-                    {errors.student_birth_place && (
-                      <p className="text-destructive text-sm mt-1">{errors.student_birth_place.message}</p>
-                    )}
-                  </div>
-                  <div>
-                    <Label htmlFor="student_birth_date">Tanggal Lahir *</Label>
-                    <Input
-                      id="student_birth_date"
-                      type="date"
-                      {...register("student_birth_date")}
-                    />
-                    {errors.student_birth_date && (
-                      <p className="text-destructive text-sm mt-1">{errors.student_birth_date.message}</p>
-                    )}
-                  </div>
-                  <div>
-                    <Label>Jenis Kelamin *</Label>
-                    <RadioGroup
-                      onValueChange={(value) => setValue("student_gender", value as "male" | "female")}
-                      className="flex gap-4 mt-2"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="male" id="male" />
-                        <Label htmlFor="male" className="cursor-pointer">Laki-laki</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="female" id="female" />
-                        <Label htmlFor="female" className="cursor-pointer">Perempuan</Label>
-                      </div>
-                    </RadioGroup>
-                    {errors.student_gender && (
-                      <p className="text-destructive text-sm mt-1">{errors.student_gender.message}</p>
-                    )}
-                  </div>
-                  <div>
-                    <Label htmlFor="previous_school">Asal Sekolah</Label>
-                    <Input
-                      id="previous_school"
-                      {...register("previous_school")}
-                      placeholder="Nama sekolah sebelumnya"
-                    />
-                  </div>
-                </div>
-              </div>
+            {/* Form */}
+            <div className="bg-card rounded-2xl shadow-card p-8 border border-border">
+              <form onSubmit={form.handleSubmit(handleSubmit)}>
+                {/* Step 1: Parent Info */}
+                {step === 1 && (
+                  <div className="space-y-6 animate-fade-in">
+                    <div className="flex items-center gap-3 mb-6">
+                      <User className="w-6 h-6 text-primary" />
+                      <h2 className="font-serif text-xl font-bold">Data Wali Santri</h2>
+                    </div>
 
-              {/* Documents Upload */}
-              <div className="bg-card p-6 rounded-xl border border-border">
-                <h2 className="font-serif text-xl font-semibold text-foreground mb-4">
-                  Dokumen Persyaratan
-                </h2>
-                <p className="text-muted-foreground text-sm mb-4">
-                  Upload dokumen dalam format JPG, PNG, atau PDF. Maksimal 5MB per file.
-                </p>
-                {/* Payment Proof - Required */}
-                <div className={`border rounded-lg p-4 ${paymentProofError ? "border-destructive" : "border-border"}`}>
-                  <Label className="mb-2 block">
-                    Bukti Pembayaran Pendaftaran <span className="text-destructive">*</span>
-                  </Label>
-                  <div className="relative">
-                    <input
-                      type="file"
-                      accept="image/*,.pdf"
-                      onChange={(e) => {
-                        handleFileChange("payment_proof", e.target.files?.[0]);
-                        if (e.target.files?.[0]) setPaymentProofError(false);
-                      }}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    />
-                    <div className={`flex items-center gap-3 p-3 border-2 border-dashed rounded-lg hover:border-primary transition-colors ${paymentProofError ? "border-destructive" : "border-border"}`}>
-                      {documents.payment_proof ? (
-                        <>
-                          <CheckCircle className="w-5 h-5 text-primary" />
-                          <span className="text-sm text-foreground truncate">
-                            {documents.payment_proof.name}
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="w-5 h-5 text-muted-foreground" />
-                          <span className="text-sm text-muted-foreground">Upload bukti transfer...</span>
-                        </>
+                    <div className="space-y-2">
+                      <Label htmlFor="parentName">Nama Lengkap Wali</Label>
+                      <Input
+                        id="parentName"
+                        placeholder="Masukkan nama lengkap"
+                        {...form.register("parentName")}
+                      />
+                      {form.formState.errors.parentName && (
+                        <p className="text-sm text-destructive">{form.formState.errors.parentName.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="parentEmail">Email</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                        <Input
+                          id="parentEmail"
+                          type="email"
+                          placeholder="email@contoh.com"
+                          className="pl-10"
+                          {...form.register("parentEmail")}
+                        />
+                      </div>
+                      {form.formState.errors.parentEmail && (
+                        <p className="text-sm text-destructive">{form.formState.errors.parentEmail.message}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        Email ini akan digunakan untuk login ke dashboard wali santri
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="parentPhone">Nomor Telepon</Label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                        <Input
+                          id="parentPhone"
+                          placeholder="08xxxxxxxxxx"
+                          className="pl-10"
+                          {...form.register("parentPhone")}
+                        />
+                      </div>
+                      {form.formState.errors.parentPhone && (
+                        <p className="text-sm text-destructive">{form.formState.errors.parentPhone.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="parentAddress">Alamat Lengkap</Label>
+                      <div className="relative">
+                        <MapPin className="absolute left-3 top-3 w-5 h-5 text-muted-foreground" />
+                        <Textarea
+                          id="parentAddress"
+                          placeholder="Masukkan alamat lengkap"
+                          className="pl-10 min-h-[100px]"
+                          {...form.register("parentAddress")}
+                        />
+                      </div>
+                      {form.formState.errors.parentAddress && (
+                        <p className="text-sm text-destructive">{form.formState.errors.parentAddress.message}</p>
                       )}
                     </div>
                   </div>
-                  {paymentProofError && (
-                    <p className="text-destructive text-sm mt-1">Bukti pembayaran wajib diupload</p>
-                  )}
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Upload bukti transfer pembayaran biaya pendaftaran
-                  </p>
-                </div>
+                )}
 
-                <div className="grid md:grid-cols-2 gap-4">
-                  {[
-                    { key: "birth_certificate", label: "Akta Kelahiran" },
-                    { key: "family_card", label: "Kartu Keluarga" },
-                    { key: "photo", label: "Pas Foto 3x4" },
-                    { key: "report_card", label: "Rapor Terakhir" },
-                  ].map(({ key, label }) => (
-                    <div key={key} className="border border-border rounded-lg p-4">
-                      <Label className="mb-2 block">{label}</Label>
-                      <div className="relative">
-                        <input
-                          type="file"
-                          accept="image/*,.pdf"
-                          onChange={(e) => handleFileChange(key as keyof typeof documents, e.target.files?.[0])}
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                {/* Step 2: Student Info */}
+                {step === 2 && (
+                  <div className="space-y-6 animate-fade-in">
+                    <div className="flex items-center gap-3 mb-6">
+                      <GraduationCap className="w-6 h-6 text-primary" />
+                      <h2 className="font-serif text-xl font-bold">Data Calon Santri</h2>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="studentName">Nama Lengkap Calon Santri</Label>
+                      <Input
+                        id="studentName"
+                        placeholder="Masukkan nama lengkap"
+                        {...form.register("studentName")}
+                      />
+                      {form.formState.errors.studentName && (
+                        <p className="text-sm text-destructive">{form.formState.errors.studentName.message}</p>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="birthPlace">Tempat Lahir</Label>
+                        <Input
+                          id="birthPlace"
+                          placeholder="Kota/Kabupaten"
+                          {...form.register("birthPlace")}
                         />
-                        <div className="flex items-center gap-3 p-3 border-2 border-dashed border-border rounded-lg hover:border-primary transition-colors">
-                          {documents[key as keyof typeof documents] ? (
-                            <>
-                              <CheckCircle className="w-5 h-5 text-primary" />
-                              <span className="text-sm text-foreground truncate">
-                                {documents[key as keyof typeof documents]?.name}
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <Upload className="w-5 h-5 text-muted-foreground" />
-                              <span className="text-sm text-muted-foreground">Pilih file...</span>
-                            </>
-                          )}
+                        {form.formState.errors.birthPlace && (
+                          <p className="text-sm text-destructive">{form.formState.errors.birthPlace.message}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="birthDate">Tanggal Lahir</Label>
+                        <div className="relative">
+                          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                          <Input
+                            id="birthDate"
+                            type="date"
+                            className="pl-10"
+                            {...form.register("birthDate")}
+                          />
                         </div>
+                        {form.formState.errors.birthDate && (
+                          <p className="text-sm text-destructive">{form.formState.errors.birthDate.message}</p>
+                        )}
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
 
-              {/* Submit */}
-              <div className="flex flex-col items-center gap-4">
-                <Button
-                  type="submit"
-                  variant="gold"
-                  size="xl"
-                  disabled={isSubmitting}
-                  className="w-full md:w-auto"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Mengirim...
-                    </>
+                    <div className="space-y-2">
+                      <Label>Jenis Kelamin</Label>
+                      <RadioGroup
+                        value={form.watch("gender")}
+                        onValueChange={(value) => form.setValue("gender", value)}
+                        className="flex gap-6"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="laki-laki" id="male" />
+                          <Label htmlFor="male" className="font-normal">Laki-laki</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="perempuan" id="female" />
+                          <Label htmlFor="female" className="font-normal">Perempuan</Label>
+                        </div>
+                      </RadioGroup>
+                      {form.formState.errors.gender && (
+                        <p className="text-sm text-destructive">{form.formState.errors.gender.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="previousSchool">Asal Sekolah (Opsional)</Label>
+                      <div className="relative">
+                        <School className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                        <Input
+                          id="previousSchool"
+                          placeholder="Nama sekolah sebelumnya"
+                          className="pl-10"
+                          {...form.register("previousSchool")}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 3: Institution Selection */}
+                {step === 3 && (
+                  <div className="space-y-6 animate-fade-in">
+                    <div className="flex items-center gap-3 mb-6">
+                      <GraduationCap className="w-6 h-6 text-primary" />
+                      <h2 className="font-serif text-xl font-bold">Pilih Lembaga Pendidikan</h2>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Lembaga yang Dituju</Label>
+                      <Select
+                        value={form.watch("institution")}
+                        onValueChange={(value) => form.setValue("institution", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Pilih lembaga pendidikan" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {institutions.map((inst) => (
+                            <SelectItem key={inst.id} value={inst.id}>
+                              {inst.name} - {inst.level}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {form.formState.errors.institution && (
+                        <p className="text-sm text-destructive">{form.formState.errors.institution.message}</p>
+                      )}
+                    </div>
+
+                    {form.watch("institution") && (
+                      <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+                        <h4 className="font-semibold text-primary mb-2">
+                          {institutions.find(i => i.id === form.watch("institution"))?.name}
+                        </h4>
+                        <p className="text-sm text-muted-foreground">
+                          {institutions.find(i => i.id === form.watch("institution"))?.level}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Step 4: Document Upload */}
+                {step === 4 && (
+                  <div className="space-y-6 animate-fade-in">
+                    <div className="flex items-center gap-3 mb-6">
+                      <Upload className="w-6 h-6 text-primary" />
+                      <h2 className="font-serif text-xl font-bold">Upload Dokumen</h2>
+                    </div>
+
+                    <p className="text-muted-foreground text-sm mb-4">
+                      Upload dokumen yang diperlukan dalam format JPG, PNG, atau PDF (maksimal 5MB per file).
+                    </p>
+
+                    <div className="space-y-4">
+                      {documentTypes.map((docType) => {
+                        const doc = documents[docType.key];
+                        const IconComponent = docType.icon;
+
+                        return (
+                          <div key={docType.key} className="border border-border rounded-lg p-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <IconComponent className="w-5 h-5 text-muted-foreground" />
+                                <Label className="font-medium">
+                                  {docType.label}
+                                  {docType.required && <span className="text-destructive ml-1">*</span>}
+                                </Label>
+                              </div>
+                              {doc && (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => removeFile(docType.key)}
+                                  className="text-destructive hover:text-destructive"
+                                >
+                                  <X className="w-4 h-4" />
+                                </Button>
+                              )}
+                            </div>
+
+                            {doc ? (
+                              <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                                {doc.file.type.startsWith('image/') ? (
+                                  <img
+                                    src={doc.preview}
+                                    alt={docType.label}
+                                    className="w-12 h-12 object-cover rounded"
+                                  />
+                                ) : (
+                                  <FileText className="w-12 h-12 text-primary" />
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium truncate">{doc.file.name}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {(doc.file.size / 1024 / 1024).toFixed(2)} MB
+                                  </p>
+                                </div>
+                                <CheckCircle className="w-5 h-5 text-green-500" />
+                              </div>
+                            ) : (
+                              <label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors">
+                                <Upload className="w-8 h-8 text-muted-foreground mb-2" />
+                                <span className="text-sm text-muted-foreground">
+                                  Klik untuk upload atau drag & drop
+                                </span>
+                                <span className="text-xs text-muted-foreground mt-1">
+                                  JPG, PNG, PDF (maks. 5MB)
+                                </span>
+                                <input
+                                  type="file"
+                                  accept="image/*,.pdf"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      if (file.size > 5 * 1024 * 1024) {
+                                        toast.error("Ukuran file maksimal 5MB");
+                                        return;
+                                      }
+                                      handleFileSelect(docType.key, file);
+                                    }
+                                  }}
+                                />
+                              </label>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {!allDocumentsUploaded && (
+                      <p className="text-sm text-amber-600 bg-amber-50 p-3 rounded-lg">
+                        ⚠️ Lengkapi semua dokumen yang wajib diupload untuk melanjutkan pendaftaran.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Navigation Buttons */}
+                <div className="flex justify-between mt-8 pt-6 border-t border-border">
+                  {step > 1 ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setStep(step - 1)}
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Sebelumnya
+                    </Button>
                   ) : (
-                    "Kirim Pendaftaran"
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => navigate("/")}
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Kembali
+                    </Button>
                   )}
-                </Button>
-                <p className="text-sm text-muted-foreground text-center">
-                  Dengan mengirim formulir ini, Anda menyetujui syarat dan ketentuan yang berlaku.
-                </p>
-              </div>
-            </form>
+
+                  {step < 4 ? (
+                    <Button type="button" onClick={nextStep}>
+                      Selanjutnya
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  ) : (
+                    <Button
+                      type="submit"
+                      disabled={isLoading || !allDocumentsUploaded}
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          {uploadingDocs ? "Mengupload dokumen..." : "Mendaftarkan..."}
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          Daftar Sekarang
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
+              </form>
+            </div>
           </div>
         </div>
-      </main>
-
-      <Footer />
-    </>
+      </section>
+    </Layout>
   );
-};
-
-export default Registration;
+}
