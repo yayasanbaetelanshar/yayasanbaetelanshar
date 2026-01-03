@@ -1,292 +1,199 @@
-import { useEffect, useState } from "react";
-import { Helmet } from "react-helmet-async";
-import { Play, Image as ImageIcon, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
+import { Image as ImageIcon, Play, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import Layout from "@/components/layout/Layout";
 
 interface GalleryItem {
   id: string;
   title: string;
-  description: string | null;
+  description: string;
+  media_type: string;
   media_url: string;
-  media_type: "image" | "video";
-  category: string;
-  institution: string | null;
-  is_featured: boolean;
-  created_at: string;
 }
 
-const categories = [
-  { value: "all", label: "Semua" },
-  { value: "kegiatan", label: "Kegiatan Santri" },
-  { value: "acara", label: "Acara Yayasan" },
-  { value: "fasilitas", label: "Fasilitas" },
-  { value: "prestasi", label: "Prestasi" },
-];
-
-// Sample gallery data for demo
-const sampleGallery: GalleryItem[] = [
+const placeholderGallery = [
   {
     id: "1",
-    title: "Wisuda Tahfidz 30 Juz",
-    description: "Wisuda santri yang telah menyelesaikan hafalan 30 juz Al-Quran",
-    media_url: "https://images.unsplash.com/photo-1609599006353-e629aaabfeae?w=800",
+    title: "Wisuda Tahfidz 2024",
+    description: "Kelulusan 50 hafidz/hafidzah baru",
     media_type: "image",
-    category: "acara",
-    institution: "pesantren",
-    is_featured: true,
-    created_at: new Date().toISOString(),
+    media_url: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=600&h=400&fit=crop",
   },
   {
     id: "2",
-    title: "Pembelajaran di Kelas",
-    description: "Suasana belajar mengajar di kelas SMP",
-    media_url: "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800",
+    title: "Kegiatan Mengaji",
+    description: "Santri belajar Al-Quran bersama ustadz",
     media_type: "image",
-    category: "kegiatan",
-    institution: "smp",
-    is_featured: false,
-    created_at: new Date().toISOString(),
+    media_url: "https://images.unsplash.com/photo-1584286595398-a59511e0649f?w=600&h=400&fit=crop",
   },
   {
     id: "3",
     title: "Masjid Yayasan",
-    description: "Masjid utama komplek Yayasan Baet El Anshar",
-    media_url: "https://images.unsplash.com/photo-1585036156171-384164a8c675?w=800",
+    description: "Masjid sebagai pusat kegiatan ibadah",
     media_type: "image",
-    category: "fasilitas",
-    institution: null,
-    is_featured: true,
-    created_at: new Date().toISOString(),
+    media_url: "https://images.unsplash.com/photo-1564769625392-651b89c75a77?w=600&h=400&fit=crop",
   },
   {
     id: "4",
-    title: "Halaqah Tahfidz",
-    description: "Santri mengikuti halaqah tahfidz pagi",
-    media_url: "https://images.unsplash.com/photo-1609599006353-e629aaabfeae?w=800",
+    title: "Perlombaan Tahfidz",
+    description: "Kompetisi hafalan Al-Quran tingkat nasional",
     media_type: "image",
-    category: "kegiatan",
-    institution: "pesantren",
-    is_featured: false,
-    created_at: new Date().toISOString(),
+    media_url: "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=600&h=400&fit=crop",
   },
   {
     id: "5",
-    title: "Lomba MTQ",
-    description: "Siswa meraih juara dalam lomba MTQ tingkat kabupaten",
-    media_url: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800",
+    title: "Kegiatan Olahraga",
+    description: "Santri berolahraga bersama",
     media_type: "image",
-    category: "prestasi",
-    institution: "sma",
-    is_featured: true,
-    created_at: new Date().toISOString(),
+    media_url: "https://images.unsplash.com/photo-1461896836934- voices?w=600&h=400&fit=crop",
   },
   {
     id: "6",
-    title: "Perpustakaan",
-    description: "Perpustakaan Islam dengan koleksi lengkap",
-    media_url: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800",
-    media_type: "image",
-    category: "fasilitas",
-    institution: null,
-    is_featured: false,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: "7",
     title: "Upacara Bendera",
-    description: "Upacara bendera hari Senin",
-    media_url: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800",
+    description: "Upacara rutin setiap Senin",
     media_type: "image",
-    category: "kegiatan",
-    institution: "smp",
-    is_featured: false,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: "8",
-    title: "Asrama Putra",
-    description: "Asrama putra yang bersih dan nyaman",
-    media_url: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800",
-    media_type: "image",
-    category: "fasilitas",
-    institution: "pesantren",
-    is_featured: false,
-    created_at: new Date().toISOString(),
+    media_url: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=600&h=400&fit=crop",
   },
 ];
 
-const Gallery = () => {
-  const [gallery, setGallery] = useState<GalleryItem[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState("all");
+export default function Gallery() {
+  const [gallery, setGallery] = useState<GalleryItem[]>(placeholderGallery);
   const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<"all" | "image" | "video">("all");
 
   useEffect(() => {
-    const fetchGallery = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("gallery")
-          .select("*")
-          .order("created_at", { ascending: false });
-
-        if (error) throw error;
-
-        if (data && data.length > 0) {
-          setGallery(data as GalleryItem[]);
-        } else {
-          // Use sample data if no data in database
-          setGallery(sampleGallery);
-        }
-      } catch (err) {
-        // Use sample data on error
-        setGallery(sampleGallery);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchGallery();
   }, []);
 
-  const filteredGallery =
-    selectedCategory === "all"
-      ? gallery
-      : gallery.filter((item) => item.category === selectedCategory);
+  const fetchGallery = async () => {
+    const { data } = await supabase
+      .from("gallery")
+      .select("*")
+      .order("created_at", { ascending: false });
+    
+    if (data && data.length > 0) {
+      setGallery(data);
+    }
+  };
+
+  const filteredGallery = gallery.filter((item) => {
+    if (filter === "all") return true;
+    return item.media_type === filter;
+  });
 
   return (
-    <>
-      <Helmet>
-        <title>Galeri - Yayasan Baet El Anshar</title>
-        <meta name="description" content="Galeri foto dan video kegiatan santri, acara yayasan, dan fasilitas Yayasan Baet El Anshar" />
-      </Helmet>
+    <Layout>
+      {/* Hero */}
+      <section className="bg-primary py-16 lg:py-20">
+        <div className="container mx-auto px-4 text-center">
+          <h1 className="font-serif text-4xl md:text-5xl font-bold text-primary-foreground mb-4">
+            Galeri Kegiatan
+          </h1>
+          <p className="text-xl text-primary-foreground/80 max-w-2xl mx-auto">
+            Dokumentasi kegiatan santri, acara yayasan, dan fasilitas pondok pesantren
+          </p>
+        </div>
+      </section>
 
-      <Navbar />
-
-      <main className="pt-24 pb-16 bg-background min-h-screen">
+      {/* Gallery */}
+      <section className="py-16 lg:py-24">
         <div className="container mx-auto px-4">
-          {/* Header */}
-          <div className="text-center mb-12">
-            <span className="text-secondary font-serif text-lg mb-2 block">Dokumentasi</span>
-            <h1 className="font-serif text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
-              Galeri Foto & Video
-            </h1>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Lihat dokumentasi kegiatan santri, acara yayasan, dan fasilitas yang tersedia di Yayasan Baet El Anshar.
-            </p>
-          </div>
-
-          {/* Category Filter */}
-          <div className="flex flex-wrap justify-center gap-2 mb-10">
-            {categories.map((cat) => (
-              <Button
-                key={cat.value}
-                variant={selectedCategory === cat.value ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedCategory(cat.value)}
+          {/* Filter */}
+          <div className="flex justify-center gap-4 mb-12">
+            {["all", "image", "video"].map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f as typeof filter)}
+                className={`px-6 py-2 rounded-full font-medium transition-colors ${
+                  filter === f
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-accent"
+                }`}
               >
-                {cat.label}
-              </Button>
+                {f === "all" ? "Semua" : f === "image" ? "Foto" : "Video"}
+              </button>
             ))}
           </div>
 
-          {/* Gallery Grid */}
-          {loading ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {[...Array(8)].map((_, i) => (
-                <div key={i} className="aspect-square bg-muted rounded-xl animate-pulse" />
-              ))}
-            </div>
-          ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {filteredGallery.map((item) => (
-                <div
-                  key={item.id}
-                  className="group relative aspect-square rounded-xl overflow-hidden cursor-pointer card-hover"
-                  onClick={() => setSelectedItem(item)}
-                >
-                  <img
-                    src={item.media_url}
-                    alt={item.title}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <div className="absolute bottom-0 left-0 right-0 p-4">
-                      <h3 className="text-primary-foreground font-semibold">{item.title}</h3>
-                      <p className="text-primary-foreground/80 text-sm line-clamp-1">
-                        {item.description}
-                      </p>
+          {/* Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredGallery.map((item) => (
+              <div
+                key={item.id}
+                className="group relative aspect-[4/3] rounded-2xl overflow-hidden cursor-pointer card-hover"
+                onClick={() => setSelectedItem(item)}
+              >
+                <img
+                  src={item.media_url}
+                  alt={item.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=600&h=400&fit=crop";
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute bottom-0 left-0 right-0 p-6">
+                    <h3 className="font-serif text-xl font-bold text-white mb-1">
+                      {item.title}
+                    </h3>
+                    <p className="text-white/80 text-sm">{item.description}</p>
+                  </div>
+                </div>
+                {item.media_type === "video" && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                      <Play className="w-8 h-8 text-white fill-white" />
                     </div>
                   </div>
-                  {item.media_type === "video" && (
-                    <div className="absolute top-4 right-4 w-10 h-10 bg-foreground/50 rounded-full flex items-center justify-center">
-                      <Play className="w-5 h-5 text-primary-foreground" />
-                    </div>
-                  )}
-                  {item.is_featured && (
-                    <div className="absolute top-4 left-4 bg-secondary text-secondary-foreground text-xs px-2 py-1 rounded-full font-medium">
-                      Featured
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+                )}
+              </div>
+            ))}
+          </div>
 
-          {/* Empty State */}
-          {!loading && filteredGallery.length === 0 && (
+          {filteredGallery.length === 0 && (
             <div className="text-center py-16">
               <ImageIcon className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">Tidak ada foto/video dalam kategori ini.</p>
+              <p className="text-muted-foreground">Belum ada galeri</p>
             </div>
           )}
         </div>
-      </main>
+      </section>
 
-      {/* Lightbox Modal */}
+      {/* Lightbox */}
       {selectedItem && (
         <div
-          className="fixed inset-0 z-50 bg-foreground/90 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
           onClick={() => setSelectedItem(null)}
         >
           <button
-            className="absolute top-4 right-4 w-10 h-10 bg-primary-foreground/20 rounded-full flex items-center justify-center text-primary-foreground hover:bg-primary-foreground/30 transition-colors"
+            className="absolute top-4 right-4 w-12 h-12 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
             onClick={() => setSelectedItem(null)}
           >
-            <X className="w-6 h-6" />
+            <X className="w-6 h-6 text-white" />
           </button>
-          <div
-            className="max-w-4xl w-full animate-scale-in"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {selectedItem.media_type === "image" ? (
-              <img
-                src={selectedItem.media_url}
-                alt={selectedItem.title}
-                className="w-full rounded-xl"
-              />
-            ) : (
+          <div className="max-w-4xl w-full" onClick={(e) => e.stopPropagation()}>
+            {selectedItem.media_type === "video" ? (
               <video
                 src={selectedItem.media_url}
                 controls
                 className="w-full rounded-xl"
               />
+            ) : (
+              <img
+                src={selectedItem.media_url}
+                alt={selectedItem.title}
+                className="w-full rounded-xl"
+              />
             )}
-            <div className="mt-4 text-center text-primary-foreground">
-              <h3 className="text-xl font-semibold">{selectedItem.title}</h3>
-              {selectedItem.description && (
-                <p className="text-primary-foreground/80 mt-2">{selectedItem.description}</p>
-              )}
+            <div className="mt-4 text-center">
+              <h3 className="font-serif text-2xl font-bold text-white mb-2">
+                {selectedItem.title}
+              </h3>
+              <p className="text-white/70">{selectedItem.description}</p>
             </div>
           </div>
         </div>
       )}
-
-      <Footer />
-    </>
+    </Layout>
   );
-};
-
-export default Gallery;
+}

@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import heroBg from "@/assets/hero-bg.jpg";
+import { Link } from "react-router-dom"; // pastikan sudah install & setup react-router-dom
 
 const HeroSection = () => {
   return (
@@ -16,13 +17,13 @@ const HeroSection = () => {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 container mx-auto px-4 text-center pt-20">
-        <div className="max-w-4xl mx-auto animate-fade-in">
+      <div className="relative z-20 container mx-auto px-4 text-center pt-16 md:pt-12 lg:pt-8">
+        <div className="max-w-5xl mx-auto animate-fade-in">
           {/* Arabic Calligraphy Style */}
           <p className="text-secondary text-lg md:text-xl font-serif mb-4 animate-pulse-soft">
             بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
           </p>
-          
+
           <h1 className="font-serif text-4xl md:text-5xl lg:text-7xl font-bold text-primary-foreground mb-6 leading-tight">
             Yayasan
             <span className="block text-gradient mt-2">Baet El Anshar</span>
@@ -34,16 +35,16 @@ const HeroSection = () => {
           </p>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 max-w-3xl mx-auto mb-10">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 max-w-3xl mx-auto mb-8 md:mb-10">
             {[
               { number: "4", label: "Lembaga Pendidikan" },
               { number: "500+", label: "Santri & Siswa" },
               { number: "50+", label: "Tenaga Pengajar" },
-              { number: "9", label: "Tahun Berdiri" },
+              { number: "15+", label: "Tahun Berdiri" },
             ].map((stat, index) => (
               <div
                 key={index}
-                className="text-center p-4 rounded-lg bg-primary-foreground/10 backdrop-blur-sm"
+                className="text-center p-3 md:p-4 rounded-lg bg-primary-foreground/10 backdrop-blur-sm"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <div className="text-2xl md:text-3xl font-bold text-secondary font-serif">
@@ -56,30 +57,20 @@ const HeroSection = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-<Button
-  variant="gold"
-  size="xl"
-  onClick={() => {
-    const el = document.getElementById("lembaga");
-    el && el.scrollIntoView({ behavior: "smooth" });
-  }}
->
-  Jelajahi Lembaga Kami
-</Button>
+            <Button variant="gold" size="xl" asChild>
+              <Link to="/tentang">
+                Jelajahi Lembaga Kami
+              </Link>
+            </Button>
 
-<Button
-  variant="outline-light"
-  size="xl"
-  onClick={() => {
-    const el = document.getElementById("kontak");
-    el && el.scrollIntoView({ behavior: "smooth" });
-  }}
->
-  Hubungi Kami
-</Button>
-</div>
+            <Button variant="outline-light" size="xl" asChild>
+              <Link to="/kontak">
+                Hubungi Kami
+              </Link>
+            </Button>
           </div>
         </div>
+      </div>
 
       {/* Scroll Indicator */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
