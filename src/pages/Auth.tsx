@@ -101,8 +101,7 @@ const Auth = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          // Optional: redirect ke halaman tertentu setelah login berhasil
-          // redirectTo: `${window.location.origin}/dashboard`,
+         redirectTo: `${window.location.origin}/auth`,
           queryParams: {
             access_type: "offline", // agar dapat refresh token jika perlu
             prompt: "consent",
