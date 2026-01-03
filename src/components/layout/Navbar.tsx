@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+<<<<<<< HEAD
 import { Menu, X, GraduationCap, User } from "lucide-react";
+=======
+import { Menu, X, BookOpen, GraduationCap, User } from "lucide-react";
+>>>>>>> 057e83a2113d2a394c2f301a98efc4cb236e1711
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,8 +13,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+<<<<<<< HEAD
 import LogoBaetElAnshar from "@/assets/logo yayasan.png";
 
+=======
+>>>>>>> 057e83a2113d2a394c2f301a98efc4cb236e1711
 const navigation = [
   { name: "Beranda", href: "/" },
   { name: "Tentang", href: "/tentang" },
@@ -38,6 +45,7 @@ export default function Navbar() {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-b border-border shadow-soft">
       <div className="container mx-auto px-4">
         <div className="flex h-20 items-center justify-between">
+<<<<<<< HEAD
           {/* Logo Yayasan */}
           <Link to="/" className="flex items-center gap-3">
             <div className="relative w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0">
@@ -46,14 +54,24 @@ export default function Navbar() {
                 alt="Logo Yayasan Baet El Anshar"
                 className="w-full h-full object-contain"
               />
+=======
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center">
+              <BookOpen className="w-6 h-6 text-primary-foreground" />
+>>>>>>> 057e83a2113d2a394c2f301a98efc4cb236e1711
             </div>
             <div className="hidden sm:block">
               <h1 className="font-serif text-xl font-bold text-foreground leading-tight">
                 Baet El Anshar
               </h1>
+<<<<<<< HEAD
               <p className="text-xs text-muted-foreground">
                 Yayasan Pendidikan Islam
               </p>
+=======
+              <p className="text-xs text-muted-foreground">Yayasan Pendidikan Islam</p>
+>>>>>>> 057e83a2113d2a394c2f301a98efc4cb236e1711
             </div>
           </Link>
 
@@ -111,10 +129,14 @@ export default function Navbar() {
               </Button>
             </Link>
             <Link to="/login">
+<<<<<<< HEAD
               <Button
                 variant="outline"
                 className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
               >
+=======
+              <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+>>>>>>> 057e83a2113d2a394c2f301a98efc4cb236e1711
                 <User className="w-4 h-4 mr-2" />
                 Login Wali
               </Button>
@@ -139,6 +161,7 @@ export default function Navbar() {
         {mobileMenuOpen && (
           <div className="lg:hidden py-4 border-t border-border animate-slide-up">
             <div className="flex flex-col gap-2">
+<<<<<<< HEAD
               {/* Logo + Nama di mobile menu */}
               <div className="px-4 pb-3 border-b border-border/50">
                 <div className="flex items-center gap-3">
@@ -156,6 +179,8 @@ export default function Navbar() {
                 </div>
               </div>
 
+=======
+>>>>>>> 057e83a2113d2a394c2f301a98efc4cb236e1711
               {navigation.map((item) =>
                 item.children ? (
                   <div key={item.name} className="space-y-1">
@@ -192,7 +217,10 @@ export default function Navbar() {
                   </Link>
                 )
               )}
+<<<<<<< HEAD
 
+=======
+>>>>>>> 057e83a2113d2a394c2f301a98efc4cb236e1711
               <div className="flex flex-col gap-2 mt-4 px-4">
                 <Link to="/pendaftaran" onClick={() => setMobileMenuOpen(false)}>
                   <Button className="w-full bg-secondary text-secondary-foreground">
@@ -201,10 +229,14 @@ export default function Navbar() {
                   </Button>
                 </Link>
                 <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
+<<<<<<< HEAD
                   <Button
                     variant="outline"
                     className="w-full border-primary text-primary"
                   >
+=======
+                  <Button variant="outline" className="w-full border-primary text-primary">
+>>>>>>> 057e83a2113d2a394c2f301a98efc4cb236e1711
                     <User className="w-4 h-4 mr-2" />
                     Login Wali
                   </Button>
@@ -216,4 +248,8 @@ export default function Navbar() {
       </div>
     </nav>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 057e83a2113d2a394c2f301a98efc4cb236e1711

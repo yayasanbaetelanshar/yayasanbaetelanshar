@@ -5,7 +5,11 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
+<<<<<<< HEAD
   "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+=======
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+>>>>>>> 057e83a2113d2a394c2f301a98efc4cb236e1711
   {
     variants: {
       variant: {
@@ -15,9 +19,12 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+<<<<<<< HEAD
         // Variant custom untuk tema yayasan
         gold: "bg-gradient-to-r from-yellow-500 to-amber-600 text-white hover:from-yellow-600 hover:to-amber-700 shadow-lg",
         "outline-light": "border border-white/60 bg-transparent text-white hover:bg-white/10 hover:border-white/80 backdrop-blur-sm transition-all",
+=======
+>>>>>>> 057e83a2113d2a394c2f301a98efc4cb236e1711
       },
       size: {
         default: "h-10 px-4 py-2",
